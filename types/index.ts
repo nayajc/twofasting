@@ -1,4 +1,4 @@
-export type FastingDuration = 12 | 14 | 16 | 18 | 24;
+export type FastingDuration = 12 | 14 | 16 | 18 | 20 | 24;
 
 export interface User {
   uid: string;
