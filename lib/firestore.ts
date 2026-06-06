@@ -33,6 +33,11 @@ export async function startFast(uid: string, goalHours: FastingDuration): Promis
   });
 }
 
+export async function updateFastStartTime(uid: string, newStartTime: Date): Promise<void> {
+  const ref = doc(db, 'users', uid, 'state', 'activeFast');
+  await setDoc(ref, { startTime: Timestamp.fromDate(newStartTime) }, { merge: true });
+}
+
 export async function stopFast(
   uid: string,
   activeFast: ActiveFast,

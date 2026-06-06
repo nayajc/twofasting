@@ -6,7 +6,7 @@ import { BottomNav } from '@/components/ui/BottomNav';
 import { useAuth } from '@/hooks/useAuth';
 import { useActiveFast } from '@/hooks/useActiveFast';
 import { useFastingTick } from '@/hooks/useFastingTick';
-import { startFast, stopFast, getFastHistory } from '@/lib/firestore';
+import { startFast, stopFast, getFastHistory, updateFastStartTime } from '@/lib/firestore';
 import { computeStreak } from '@/lib/fasting';
 import type { FastingDuration, FastingRecord } from '@/types';
 import { FASTING_PHASES } from '@/data/fastingPhases';
@@ -37,54 +37,40 @@ const QUOTES = [
 ];
 
 const PHASE_COLORS: Record<number, string> = {
-  0: '#94A3B8',
-  1: '#3B82F6',
-  2: '#F97316',
-  3: '#EAB308',
-  4: '#8B5CF6',
-  5: '#10B981',
+  0: '#94A3B8', 1: '#3B82F6', 2: '#F97316',
+  3: '#EAB308', 4: '#8B5CF6', 5: '#10B981',
 };
 
 const NULL_TICK = {
-  elapsed: 0,
-  remaining: 0,
-  progress: 0,
-  complete: false,
+  elapsed: 0, remaining: 0, progress: 0, complete: false,
   currentPhase: null as never,
   formattedRemaining: { hours: '00', minutes: '00', seconds: '00' },
   now: new Date(),
 };
 
 function ArcTimer({ progress, color, size = 220, children }: {
-  progress: number;
-  color: string;
-  size?: number;
-  children: React.ReactNode;
+  progress: number; color: string; size?: number; children: React.ReactNode;
 }) {
   const r = (size - 20) / 2;
   const circ = 2 * Math.PI * r;
   const offset = circ * (1 - Math.min(progress, 1));
-
   return (
     <div style={{ width: size, height: size }} className="relative">
       <svg width={size} height={size} className="absolute inset-0 -rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#F0F0F0" strokeWidth={10} />
-        <circle
-          cx={size / 2} cy={size / 2} r={r}
-          fill="none"
-          stroke={color}
-          strokeWidth={10}
-          strokeLinecap="round"
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          style={{ transition: 'stroke-dashoffset 0.5s ease' }}
-        />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#F0F0F0" strokeWidth={10} />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={10}
+          strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
+          style={{ transition: 'stroke-dashoffset 0.5s ease' }} />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        {children}
-      </div>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">{children}</div>
     </div>
   );
+}
+
+// datetime-local 값 ↔ Date 변환 헬퍼
+function toDatetimeLocal(d: Date) {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 export default function TimerPage() {
@@ -93,17 +79,36 @@ export default function TimerPage() {
   const [goal, setGoal] = useState<FastingDuration>(16);
   const [actionLoading, setActionLoading] = useState(false);
   const [records, setRecords] = useState<FastingRecord[]>([]);
+
+  // Quote rotation
   const [quoteIndex, setQuoteIndex] = useState(0);
   const [quoteVisible, setQuoteVisible] = useState(true);
   const quoteTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Start time editor
+  const [editingStart, setEditingStart] = useState(false);
+  const [editStartValue, setEditStartValue] = useState('');
+
+  // Notification permission
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission>('default');
+  const notifiedRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof Notification !== 'undefined') {
+      setNotifPermission(Notification.permission);
+    }
+  }, []);
+
+  const requestNotifPermission = async () => {
+    if (typeof Notification === 'undefined') return;
+    const result = await Notification.requestPermission();
+    setNotifPermission(result);
+  };
+
   useEffect(() => {
     quoteTimer.current = setInterval(() => {
       setQuoteVisible(false);
-      setTimeout(() => {
-        setQuoteIndex(i => (i + 1) % QUOTES.length);
-        setQuoteVisible(true);
-      }, 400);
+      setTimeout(() => { setQuoteIndex(i => (i + 1) % QUOTES.length); setQuoteVisible(true); }, 400);
     }, 5000);
     return () => { if (quoteTimer.current) clearInterval(quoteTimer.current); };
   }, []);
@@ -111,12 +116,23 @@ export default function TimerPage() {
   const rawTick = useFastingTick(activeFast);
   const tick = rawTick ?? NULL_TICK;
 
+  // 완료 알림
+  useEffect(() => {
+    if (tick.complete && !notifiedRef.current) {
+      notifiedRef.current = true;
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        new Notification('🎉 단식 완료!', {
+          body: `목표 ${activeFast?.goalHours}시간 달성했어요. 고마무라! 쫌!`,
+          icon: '/icons/icon-192.svg',
+        });
+      }
+    }
+    if (!tick.complete) notifiedRef.current = false;
+  }, [tick.complete, activeFast?.goalHours]);
+
   const phaseIndex = tick.currentPhase
-    ? FASTING_PHASES.findIndex(p => p.id === tick.currentPhase?.id)
-    : 0;
-  const phaseColor = activeFast
-    ? (PHASE_COLORS[Math.max(0, phaseIndex)] ?? '#94A3B8')
-    : '#E5E7EB';
+    ? FASTING_PHASES.findIndex(p => p.id === tick.currentPhase?.id) : 0;
+  const phaseColor = activeFast ? (PHASE_COLORS[Math.max(0, phaseIndex)] ?? '#94A3B8') : '#E5E7EB';
 
   useEffect(() => {
     if (!user) return;
@@ -126,6 +142,16 @@ export default function TimerPage() {
   const completed = records.filter(r => r.completed);
   const streak = computeStreak(completed);
   const totalDays = new Set(completed.map(r => r.dateKey)).size;
+
+  // 이번 달 달성률
+  const now = new Date();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const dayOfMonth = now.getDate();
+  const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const thisMonthDays = new Set(
+    completed.filter(r => r.dateKey.startsWith(thisMonthKey)).map(r => r.dateKey)
+  ).size;
+  const monthRate = Math.round((thisMonthDays / dayOfMonth) * 100);
 
   const handleStart = useCallback(async () => {
     if (!user) return;
@@ -141,28 +167,35 @@ export default function TimerPage() {
     finally { setActionLoading(false); }
   }, [user, activeFast, tick.elapsed]);
 
+  const handleEditStart = () => {
+    if (!activeFast) return;
+    setEditStartValue(toDatetimeLocal(activeFast.startTime));
+    setEditingStart(true);
+  };
+
+  const handleSaveStart = async () => {
+    if (!user || !editStartValue) return;
+    const newStart = new Date(editStartValue);
+    if (isNaN(newStart.getTime()) || newStart >= new Date()) return;
+    setActionLoading(true);
+    try { await updateFastStartTime(user.uid, newStart); }
+    finally { setActionLoading(false); setEditingStart(false); }
+  };
+
   const { hours: h, minutes: m, seconds: s } = tick.formattedRemaining;
-
-  const startHour = activeFast
-    ? activeFast.startTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
-    : null;
-  const endHour = activeFast
-    ? new Date(activeFast.startTime.getTime() + activeFast.goalHours * 3600000)
-        .toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
-    : null;
-
   const displayGoal = activeFast ? activeFast.goalHours : goal;
 
+  const startHour = activeFast
+    ? activeFast.startTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : null;
+  const endHour = activeFast
+    ? new Date(activeFast.startTime.getTime() + activeFast.goalHours * 3600000)
+        .toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : null;
+
   const last7: { date: string; status: 'success' | 'fail' | 'none' }[] = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
+    const d = new Date(); d.setDate(d.getDate() - (6 - i));
     const key = d.toISOString().slice(0, 10);
     const dayRecords = records.filter(r => r.dateKey === key);
-    const status = dayRecords.some(r => r.completed)
-      ? 'success'
-      : dayRecords.length > 0
-        ? 'fail'
-        : 'none';
+    const status = dayRecords.some(r => r.completed) ? 'success' : dayRecords.length > 0 ? 'fail' : 'none';
     return { date: key, status };
   });
 
@@ -177,30 +210,48 @@ export default function TimerPage() {
             </p>
             <h1 className="text-xl font-black text-gray-900 tracking-tight">고마무라!</h1>
           </div>
-          {user?.photoURL ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.photoURL} alt="profile" className="w-9 h-9 rounded-full border border-gray-100" />
-          ) : (
-            <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-sm font-bold">
-              {user?.displayName?.[0] ?? '?'}
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {/* 알림 버튼 */}
+            {notifPermission !== 'granted' && (
+              <button
+                onClick={requestNotifPermission}
+                className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"
+                title="단식 완료 알림 켜기"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+              </button>
+            )}
+            {user?.photoURL ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={user.photoURL} alt="profile" className="w-9 h-9 rounded-full border border-gray-100" />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-sm font-bold">
+                {user?.displayName?.[0] ?? '?'}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 pt-5 flex flex-col gap-4">
           {/* Stats Row */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-white rounded-2xl p-4 text-center shadow-sm">
-              <div className="text-2xl font-black text-gray-900">{streak.current}</div>
-              <div className="text-xs text-gray-400 mt-0.5 font-medium">🔥 연속</div>
+          <div className="grid grid-cols-4 gap-2">
+            <div className="bg-white rounded-2xl p-3 text-center shadow-sm">
+              <div className="text-xl font-black text-gray-900">{streak.current}</div>
+              <div className="text-[10px] text-gray-400 mt-0.5 font-medium">🔥 연속</div>
             </div>
-            <div className="bg-white rounded-2xl p-4 text-center shadow-sm">
-              <div className="text-2xl font-black text-gray-900">{totalDays}</div>
-              <div className="text-xs text-gray-400 mt-0.5 font-medium">📅 총 일수</div>
+            <div className="bg-white rounded-2xl p-3 text-center shadow-sm">
+              <div className="text-xl font-black text-gray-900">{totalDays}</div>
+              <div className="text-[10px] text-gray-400 mt-0.5 font-medium">📅 총일수</div>
             </div>
-            <div className="bg-white rounded-2xl p-4 text-center shadow-sm">
-              <div className="text-2xl font-black text-gray-900">{streak.longest}</div>
-              <div className="text-xs text-gray-400 mt-0.5 font-medium">🏆 최장</div>
+            <div className="bg-white rounded-2xl p-3 text-center shadow-sm">
+              <div className="text-xl font-black text-gray-900">{streak.longest}</div>
+              <div className="text-[10px] text-gray-400 mt-0.5 font-medium">🏆 최장</div>
+            </div>
+            <div className="bg-white rounded-2xl p-3 text-center shadow-sm">
+              <div className="text-xl font-black text-gray-900">{monthRate}%</div>
+              <div className="text-[10px] text-gray-400 mt-0.5 font-medium">📊 이번달</div>
             </div>
           </div>
 
@@ -209,16 +260,10 @@ export default function TimerPage() {
             {/* Goal selector */}
             <div className="flex gap-2">
               {GOALS.map(g => (
-                <button
-                  key={g}
-                  onClick={() => !activeFast && setGoal(g)}
-                  disabled={!!activeFast}
+                <button key={g} onClick={() => !activeFast && setGoal(g)} disabled={!!activeFast}
                   className={`px-3 py-1.5 rounded-full text-sm font-bold transition-all ${
-                    displayGoal === g
-                      ? 'bg-gray-900 text-white'
-                      : 'bg-gray-100 text-gray-400'
-                  } ${activeFast ? 'cursor-default' : 'hover:bg-gray-200'}`}
-                >
+                    displayGoal === g ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-400'
+                  } ${activeFast ? 'cursor-default' : 'hover:bg-gray-200'}`}>
                   {g}h
                 </button>
               ))}
@@ -226,20 +271,12 @@ export default function TimerPage() {
 
             {/* Arc Timer */}
             <AnimatePresence mode="wait">
-              <motion.div
-                key={activeFast ? 'active' : 'idle'}
-                initial={{ opacity: 0, scale: 0.92 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.92 }}
-                transition={{ duration: 0.3 }}
-              >
+              <motion.div key={activeFast ? 'active' : 'idle'}
+                initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.92 }} transition={{ duration: 0.3 }}>
                 <ArcTimer progress={tick.progress} color={phaseColor}>
                   {tick.complete ? (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="text-5xl"
-                    >🎉</motion.div>
+                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-5xl">🎉</motion.div>
                   ) : (
                     <>
                       <div className="flex items-baseline gap-0.5 tabular-nums">
@@ -250,9 +287,7 @@ export default function TimerPage() {
                         <span className="text-4xl font-black text-gray-900">{s}</span>
                       </div>
                       <span className="text-xs text-gray-400 mt-1 font-medium">
-                        {activeFast
-                          ? (tick.elapsed > (activeFast.goalHours) ? '🌟 보너스 타임' : '남은 시간')
-                          : `목표 ${displayGoal}시간`}
+                        {activeFast ? (tick.elapsed > activeFast.goalHours ? '🌟 보너스 타임' : '남은 시간') : `목표 ${displayGoal}시간`}
                       </span>
                     </>
                   )}
@@ -260,44 +295,58 @@ export default function TimerPage() {
               </motion.div>
             </AnimatePresence>
 
-            {/* Start/End time */}
+            {/* Start/End time + 수정 버튼 */}
             {activeFast && (
-              <div className="flex items-center gap-3 text-sm text-gray-400">
-                <span className="font-medium">{startHour} 시작</span>
-                <div className="h-px w-6 bg-gray-200" />
-                <span className="font-medium">{endHour} 목표</span>
+              <div className="w-full">
+                {editingStart ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="datetime-local"
+                      value={editStartValue}
+                      max={toDatetimeLocal(new Date())}
+                      onChange={e => setEditStartValue(e.target.value)}
+                      className="flex-1 text-xs border border-gray-200 rounded-xl px-3 py-2 text-gray-700 focus:outline-none focus:border-gray-400"
+                    />
+                    <button onClick={handleSaveStart} disabled={actionLoading}
+                      className="px-3 py-2 bg-gray-900 text-white text-xs font-bold rounded-xl">저장</button>
+                    <button onClick={() => setEditingStart(false)}
+                      className="px-3 py-2 bg-gray-100 text-gray-500 text-xs font-bold rounded-xl">취소</button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="flex items-center gap-3 text-sm text-gray-400">
+                      <span className="font-medium">{startHour} 시작</span>
+                      <div className="h-px w-6 bg-gray-200" />
+                      <span className="font-medium">{endHour} 목표</span>
+                    </div>
+                    <button onClick={handleEditStart}
+                      className="ml-1 text-gray-300 hover:text-gray-500 transition-colors">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
             {/* Action button */}
-            <button
-              onClick={activeFast ? handleStop : handleStart}
-              disabled={actionLoading}
+            <button onClick={activeFast ? handleStop : handleStart} disabled={actionLoading}
               className={`w-full py-4 rounded-2xl font-black text-base transition-all active:scale-95 ${
-                activeFast
-                  ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  : 'bg-gray-900 text-white shadow-lg shadow-gray-900/20 hover:bg-gray-800'
-              }`}
-            >
-              {actionLoading
-                ? '...'
-                : activeFast
-                  ? '단식 종료'
-                  : '단식 시작'}
+                activeFast ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                : 'bg-gray-900 text-white shadow-lg shadow-gray-900/20 hover:bg-gray-800'
+              }`}>
+              {actionLoading ? '...' : activeFast ? '단식 종료' : '단식 시작'}
             </button>
           </div>
 
           {/* Phase card */}
           {activeFast && tick.currentPhase && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl shadow-sm p-4 flex items-center gap-3"
-            >
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-                style={{ backgroundColor: `${phaseColor}20` }}
-              >
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl shadow-sm p-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+                style={{ backgroundColor: `${phaseColor}20` }}>
                 {tick.currentPhase.icon}
               </div>
               <div>
@@ -309,10 +358,8 @@ export default function TimerPage() {
 
           {/* Quote */}
           <div className="bg-white rounded-2xl shadow-sm p-4 min-h-[72px] flex items-center justify-center">
-            <p
-              className="text-sm font-bold text-gray-700 text-center leading-relaxed transition-all duration-300"
-              style={{ opacity: quoteVisible ? 1 : 0, transform: quoteVisible ? 'translateY(0)' : 'translateY(6px)' }}
-            >
+            <p className="text-sm font-bold text-gray-700 text-center leading-relaxed transition-all duration-300"
+              style={{ opacity: quoteVisible ? 1 : 0, transform: quoteVisible ? 'translateY(0)' : 'translateY(6px)' }}>
               {QUOTES[quoteIndex]}
             </p>
           </div>
@@ -321,7 +368,9 @@ export default function TimerPage() {
           <div className="bg-white rounded-2xl shadow-sm p-4">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-bold text-gray-800">최근 7일</span>
-              <span className="text-xs text-gray-400">{completed.filter(r => last7.some(d => d.date === r.dateKey)).length} / 7 완료</span>
+              <span className="text-xs text-gray-400">
+                {last7.filter(d => d.status === 'success').length} / 7 완료
+              </span>
             </div>
             <div className="flex gap-2">
               {last7.map(({ date, status }) => {
