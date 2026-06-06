@@ -1,33 +1,36 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion } from 'framer-motion';
 
 const TABS = [
-  { href: '/timer', icon: '⏱️', label: '타이머' },
-  { href: '/history', icon: '📅', label: '히스토리' },
+  { href: '/timer', label: '타이머', icon: (active: boolean) => (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#111827' : '#9CA3AF'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  )},
+  { href: '/history', label: '기록', icon: (active: boolean) => (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={active ? '#111827' : '#9CA3AF'} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  )},
 ];
 
 export function BottomNav() {
   const path = usePathname();
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex safe-bottom z-50 shadow-lg">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex safe-bottom z-50">
       {TABS.map(tab => {
         const active = path.startsWith(tab.href);
         return (
-          <Link key={tab.href} href={tab.href} className="flex-1 flex flex-col items-center py-3 gap-0.5">
-            <motion.span
-              animate={{ scale: active ? 1.2 : 1 }}
-              className="text-2xl"
-            >
-              {tab.icon}
-            </motion.span>
-            <span className={`text-xs font-bold ${active ? 'text-primary' : 'text-gray-400'}`}>
+          <Link key={tab.href} href={tab.href} className="flex-1 flex flex-col items-center py-3 gap-1">
+            {tab.icon(active)}
+            <span className={`text-[11px] font-bold ${active ? 'text-gray-900' : 'text-gray-400'}`}>
               {tab.label}
             </span>
-            {active && (
-              <motion.div layoutId="nav-indicator" className="absolute bottom-1 w-1 h-1 rounded-full bg-primary" />
-            )}
           </Link>
         );
       })}
