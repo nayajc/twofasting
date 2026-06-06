@@ -8,6 +8,7 @@ import { useActiveFast } from '@/hooks/useActiveFast';
 import { useFastingTick } from '@/hooks/useFastingTick';
 import { startFast, stopFast, getFastHistory, updateFastStartTime } from '@/lib/firestore';
 import { computeStreak } from '@/lib/fasting';
+import { getLevelProgress } from '@/lib/level';
 import type { FastingDuration, FastingRecord } from '@/types';
 import { FASTING_PHASES } from '@/data/fastingPhases';
 
@@ -142,6 +143,7 @@ export default function TimerPage() {
   const completed = records.filter(r => r.completed);
   const streak = computeStreak(completed);
   const totalDays = new Set(completed.map(r => r.dateKey)).size;
+  const levelInfo = getLevelProgress(totalDays);
 
   // 이번 달 달성률
   const now = new Date();
@@ -253,6 +255,40 @@ export default function TimerPage() {
               <div className="text-xl font-black text-gray-900">{monthRate}%</div>
               <div className="text-[10px] text-gray-400 mt-0.5 font-medium">📊 이번달</div>
             </div>
+          </div>
+
+          {/* Level Card */}
+          <div className="bg-white rounded-2xl shadow-sm p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">{levelInfo.level.emoji}</span>
+                <div>
+                  <p className="text-sm font-black text-gray-900">{levelInfo.level.name}</p>
+                  <p className="text-xs text-gray-400">
+                    {levelInfo.next
+                      ? `${levelInfo.daysToNext}일 후 → ${levelInfo.next.name} ${levelInfo.next.emoji}`
+                      : '최고 레벨 달성! 🎖️'}
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs font-bold text-gray-400">{totalDays}일 완료</span>
+            </div>
+            {/* Progress bar */}
+            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full rounded-full"
+                style={{ backgroundColor: levelInfo.level.color }}
+                initial={{ width: 0 }}
+                animate={{ width: `${levelInfo.progress * 100}%` }}
+                transition={{ duration: 0.8, ease: 'easeOut' }}
+              />
+            </div>
+            {levelInfo.next && (
+              <div className="flex justify-between mt-1.5 text-[10px] text-gray-300 font-medium">
+                <span>{levelInfo.level.name}</span>
+                <span>{levelInfo.next.name}</span>
+              </div>
+            )}
           </div>
 
           {/* Main Timer Card */}
