@@ -53,3 +53,10 @@ export interface HeatmapDay {
   date: string; // YYYY-MM-DD
   count: number;
 }
+
+export interface WeightRecord {
+  id: string;
+  dateKey: string; // YYYY-MM-DD
+  weight: number;  // kg
+  recordedAt: Date;
+}

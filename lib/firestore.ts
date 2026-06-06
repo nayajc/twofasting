@@ -13,7 +13,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import type { ActiveFast, FastingRecord, FastingDuration } from '@/types';
+import type { ActiveFast, FastingRecord, FastingDuration, WeightRecord } from '@/types';
 import { toDateKey, computeStreak } from './fasting';
 
 function toDate(ts: any): Date {
@@ -103,6 +103,35 @@ export async function getFastHistory(uid: string): Promise<FastingRecord[]> {
     startTime: toDate(d.data().startTime),
     endTime: toDate(d.data().endTime),
   })) as FastingRecord[];
+}
+
+// ── Weight ────────────────────────────────────────────────────────────────────
+
+export async function saveWeight(uid: string, weight: number, dateKey: string): Promise<void> {
+  const ref = doc(db, 'users', uid, 'weights', dateKey);
+  await setDoc(ref, {
+    weight,
+    dateKey,
+    recordedAt: serverTimestamp(),
+  });
+}
+
+export async function getWeightHistory(uid: string): Promise<WeightRecord[]> {
+  const q = query(
+    collection(db, 'users', uid, 'weights'),
+    orderBy('dateKey', 'desc'),
+    limit(90)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({
+    id: d.id,
+    ...d.data(),
+    recordedAt: toDate(d.data().recordedAt),
+  })) as WeightRecord[];
+}
+
+export async function deleteWeight(uid: string, dateKey: string): Promise<void> {
+  await deleteDoc(doc(db, 'users', uid, 'weights', dateKey));
 }
 
 export async function updateStreak(uid: string): Promise<void> {
