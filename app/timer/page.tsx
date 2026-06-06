@@ -1,5 +1,5 @@
 'use client';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { BottomNav } from '@/components/ui/BottomNav';
@@ -12,6 +12,29 @@ import type { FastingDuration, FastingRecord } from '@/types';
 import { FASTING_PHASES } from '@/data/fastingPhases';
 
 const GOALS: FastingDuration[] = [12, 16, 18, 20, 24];
+
+const QUOTES = [
+  '배고픔은 지나가지만, 뱃살은 안 간다.',
+  '단식은 돈도 안 들고 살도 빠지는 최고의 할인 행사.',
+  '냉장고 문 열기 전에 내 인생부터 열어보자.',
+  '먹지 않으면 살이 안 찐다… 이건 과학이다.',
+  '야식 참으면 내일 아침 내가 나를 존경함.',
+  '단식 1일차: 음식 광고가 다 나한테 말 거는 중.',
+  '배고픔은 착각이다… 치킨은 진짜지만.',
+  '지금 참으면 여름에 웃는다. 지금 먹으면 바지가 운다.',
+  '입은 심심하지만 몸은 고마워하는 중.',
+  '단식은 의지 테스트, 실패하면 치킨 테스트.',
+  '한 끼 안 먹으면 통장도 다이어트 성공.',
+  '배고플 때 물 마시면… 최소한 물은 안 찐다.',
+  '먹을까 말까 고민될 땐, 이미 답은 \'말까\'다.',
+  '단식은 자기관리, 야식은 자기파괴.',
+  '내일의 내가 오늘의 나를 고소하지 않게 하자.',
+  '음식은 도망 안 간다. 내 뱃살만 도망 안 간다.',
+  '배고픔 10분 참으면 자존감 +1 상승.',
+  '지금 먹으면 5분 행복, 안 먹으면 5kg 행복.',
+  '단식 중엔 공기마저 맛있다. 문제는 칼로리가 0이라는 것.',
+  '입을 닫으면 인생이 열린다 (일단 바지 지퍼부터).',
+];
 
 const PHASE_COLORS: Record<number, string> = {
   0: '#94A3B8',
@@ -70,6 +93,20 @@ export default function TimerPage() {
   const [goal, setGoal] = useState<FastingDuration>(16);
   const [actionLoading, setActionLoading] = useState(false);
   const [records, setRecords] = useState<FastingRecord[]>([]);
+  const [quoteIndex, setQuoteIndex] = useState(0);
+  const [quoteVisible, setQuoteVisible] = useState(true);
+  const quoteTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    quoteTimer.current = setInterval(() => {
+      setQuoteVisible(false);
+      setTimeout(() => {
+        setQuoteIndex(i => (i + 1) % QUOTES.length);
+        setQuoteVisible(true);
+      }, 400);
+    }, 5000);
+    return () => { if (quoteTimer.current) clearInterval(quoteTimer.current); };
+  }, []);
 
   const rawTick = useFastingTick(activeFast);
   const tick = rawTick ?? NULL_TICK;
@@ -269,6 +306,16 @@ export default function TimerPage() {
               </div>
             </motion.div>
           )}
+
+          {/* Quote */}
+          <div className="bg-white rounded-2xl shadow-sm p-4 min-h-[72px] flex items-center justify-center">
+            <p
+              className="text-sm font-bold text-gray-700 text-center leading-relaxed transition-all duration-300"
+              style={{ opacity: quoteVisible ? 1 : 0, transform: quoteVisible ? 'translateY(0)' : 'translateY(6px)' }}
+            >
+              {QUOTES[quoteIndex]}
+            </p>
+          </div>
 
           {/* Last 7 days */}
           <div className="bg-white rounded-2xl shadow-sm p-4">
