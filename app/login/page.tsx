@@ -40,7 +40,7 @@ export default function LoginPage() {
               🍃
             </motion.div>
             <h1 className="text-4xl font-black text-gray-900 tracking-tight">고마무라!</h1>
-            <p className="text-2xl font-black text-gray-400 mt-1">쫌!</p>
+            <p className="text-8xl font-black text-gray-400 mt-1">쫌!</p>
             <p className="text-sm font-semibold text-gray-300 mt-0.5 tracking-widest uppercase">Gomamura</p>
             <p className="text-gray-500 mt-3 text-base leading-relaxed">
               간헐적 단식을 더 스마트하게.<br />
