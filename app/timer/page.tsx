@@ -88,7 +88,7 @@ export default function TimerPage() {
 
   const completed = records.filter(r => r.completed);
   const streak = computeStreak(completed);
-  const totalDays = completed.length;
+  const totalDays = new Set(completed.map(r => r.dateKey)).size;
 
   const handleStart = useCallback(async () => {
     if (!user) return;

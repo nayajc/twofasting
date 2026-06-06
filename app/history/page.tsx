@@ -22,6 +22,7 @@ export default function HistoryPage() {
 
   const completed = records.filter(r => r.completed);
   const streak = computeStreak(completed);
+  const totalDays = new Set(completed.map(r => r.dateKey)).size;
 
   // 12-week heatmap
   const today = new Date();
@@ -61,7 +62,7 @@ export default function HistoryPage() {
               <div className="text-xs text-gray-400 mt-0.5 font-medium">🔥 연속</div>
             </div>
             <div className="bg-white rounded-2xl p-4 text-center shadow-sm">
-              <div className="text-2xl font-black text-gray-900">{completed.length}</div>
+              <div className="text-2xl font-black text-gray-900">{totalDays}</div>
               <div className="text-xs text-gray-400 mt-0.5 font-medium">📅 총 일수</div>
             </div>
             <div className="bg-white rounded-2xl p-4 text-center shadow-sm">
