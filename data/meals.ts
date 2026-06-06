@@ -1,0 +1,68 @@
+import type { Meal } from '@/types';
+
+export const MEAL_RECOMMENDATIONS: Meal[] = [
+  {
+    id: 'bone-broth',
+    name: 'Bone Broth',
+    koreanName: '본 브로스',
+    description: '전해질 보충, 위장 부담 없는 부드러운 시작',
+    emoji: '🍲',
+    tag: 'gentle refeed',
+  },
+  {
+    id: 'avocado',
+    name: 'Avocado',
+    koreanName: '아보카도',
+    description: '건강한 지방과 칼륨이 풍부, 단식 후 최고의 첫 식사',
+    emoji: '🥑',
+    tag: 'healthy fats',
+  },
+  {
+    id: 'eggs',
+    name: 'Soft Boiled Eggs',
+    koreanName: '반숙 계란',
+    description: '완전 단백질로 근육 회복 지원',
+    emoji: '🥚',
+    tag: 'protein',
+  },
+  {
+    id: 'greek-yogurt',
+    name: 'Greek Yogurt',
+    koreanName: '그릭 요거트',
+    description: '장 건강에 좋은 프로바이오틱스 가득',
+    emoji: '🥛',
+    tag: 'probiotics',
+  },
+  {
+    id: 'berries',
+    name: 'Mixed Berries',
+    koreanName: '믹스 베리',
+    description: '항산화제 풍부, 혈당 급등 없이 달콤함',
+    emoji: '🫐',
+    tag: 'antioxidants',
+  },
+  {
+    id: 'salad',
+    name: 'Green Salad',
+    koreanName: '그린 샐러드',
+    description: '풍부한 채소로 소화를 부드럽게 재시작',
+    emoji: '🥗',
+    tag: 'fiber',
+  },
+  {
+    id: 'salmon',
+    name: 'Salmon',
+    koreanName: '연어',
+    description: '오메가-3와 단백질로 염증 감소',
+    emoji: '🐟',
+    tag: 'omega-3',
+  },
+  {
+    id: 'nuts',
+    name: 'Mixed Nuts',
+    koreanName: '견과류',
+    description: '마그네슘과 건강한 지방으로 에너지 보충',
+    emoji: '🥜',
+    tag: 'minerals',
+  },
+];

@@ -1,26 +1,66 @@
 @import "tailwindcss";
+@config "../tailwind.config.ts";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-primary: #58CC02;
+  --color-accent: #FFC800;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #ffffff;
+  color: #111827;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+.badge {
+  display: inline-block;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  color: #4b5563;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+}
+
+.card {
+  background-color: #ffffff;
+  border-radius: 1rem;
+  border: 1px solid #f3f4f6;
+  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1);
+  padding: 1rem;
+}
+
+.btn-primary {
+  background-color: #58CC02;
+  color: #ffffff;
+  font-weight: 900;
+  border-radius: 1.5rem;
+  padding: 1rem 2rem;
+  box-shadow: 0 10px 15px -3px rgba(88,204,2,0.3);
+  transition: all 0.15s ease;
+}
+
+.btn-primary:hover {
+  background-color: #4CAD02;
+}
+
+.btn-primary:active {
+  transform: scale(0.95);
+}
+
+/* PWA safe areas */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Tabular numbers for timer */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }

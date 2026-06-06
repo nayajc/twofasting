@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      match /state/activeFast {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+
+      match /fasts/{fastId} {
+        allow read: if request.auth != null && request.auth.uid == uid;
+        allow create: if request.auth != null && request.auth.uid == uid;
+        allow update: if request.auth != null && request.auth.uid == uid
+          && request.resource.data.startTime == resource.data.startTime;
+        allow delete: if false;
+      }
+    }
+  }
+}
