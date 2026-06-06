@@ -1,11 +1,11 @@
 {
-  "name": "TwoFasting",
-  "short_name": "TwoFasting",
+  "name": "고마무라!",
+  "short_name": "Gomamura",
   "description": "간헐적 단식을 더 스마트하게",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FFFFFF",
-  "theme_color": "#58CC02",
+  "theme_color": "#111827",
   "orientation": "portrait",
   "icons": [
     {

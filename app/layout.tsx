@@ -10,13 +10,13 @@ const nunito = Nunito({
 });
 
 export const metadata: Metadata = {
-  title: 'TwoFasting',
-  description: '간헐적 단식을 더 스마트하게',
+  title: '고마무라!',
+  description: '간헐적 단식을 더 스마트하게 — 고마무라!',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'TwoFasting',
+    title: '고마무라!',
   },
   icons: {
     apple: '/icons/icon-192.svg',

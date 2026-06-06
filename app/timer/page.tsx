@@ -138,7 +138,7 @@ export default function TimerPage() {
             <p className="text-xs text-gray-400 font-medium tracking-widest uppercase mb-0.5">
               {activeFast ? '단식 진행 중' : '단식 준비'}
             </p>
-            <h1 className="text-xl font-black text-gray-900 tracking-tight">TwoFasting</h1>
+            <h1 className="text-xl font-black text-gray-900 tracking-tight">고마무라!</h1>
           </div>
           {user?.photoURL ? (
             // eslint-disable-next-line @next/next/no-img-element
