@@ -49,21 +49,49 @@ const NULL_TICK = {
   now: new Date(),
 };
 
-function ArcTimer({ progress, color, size = 220, children }: {
-  progress: number; color: string; size?: number; children: React.ReactNode;
+function ArcTimer({ progress, color, size = 220, isBonus = false, children }: {
+  progress: number; color: string; size?: number; isBonus?: boolean; children: React.ReactNode;
 }) {
   const r = (size - 20) / 2;
   const circ = 2 * Math.PI * r;
   const offset = circ * (1 - Math.min(progress, 1));
+  // 보너스 타임: 짧은 호가 빙빙 도는 효과 (dasharray로 1/4 호 표현)
+  const bonusArcLen = circ * 0.25;
+
   return (
     <div style={{ width: size, height: size }} className="relative">
       <svg width={size} height={size} className="absolute inset-0 -rotate-90">
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#F0F0F0" strokeWidth={10} />
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={10}
-          strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
-          style={{ transition: 'stroke-dashoffset 0.5s ease' }} />
+        {/* 배경 트랙 */}
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#FEE2E2" strokeWidth={10} />
+        {/* 완료된 100% 원 (연한 빨강) */}
+        {isBonus && (
+          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#FECACA" strokeWidth={10} />
+        )}
+        {/* 메인 호 */}
+        {!isBonus && (
+          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth={10}
+            strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset}
+            style={{ transition: 'stroke-dashoffset 0.5s ease' }} />
+        )}
+        {/* 보너스: 회전하는 빨간 호 */}
+        {isBonus && (
+          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#EF4444" strokeWidth={10}
+            strokeLinecap="round"
+            strokeDasharray={`${bonusArcLen} ${circ - bonusArcLen}`}
+            strokeDashoffset={0}
+            style={{
+              transformOrigin: `${size/2}px ${size/2}px`,
+              animation: 'spin-arc 1.2s linear infinite',
+            }} />
+        )}
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">{children}</div>
+      <style>{`
+        @keyframes spin-arc {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
@@ -310,21 +338,30 @@ export default function TimerPage() {
               <motion.div key={activeFast ? 'active' : 'idle'}
                 initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.92 }} transition={{ duration: 0.3 }}>
-                <ArcTimer progress={tick.progress} color={phaseColor}>
+                <ArcTimer progress={tick.progress} color={phaseColor} isBonus={!!activeFast && tick.elapsed > activeFast.goalHours}>
                   {tick.complete ? (
                     <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-5xl">🎉</motion.div>
                   ) : (
                     <>
-                      <div className="flex items-baseline gap-0.5 tabular-nums">
-                        <span className="text-4xl font-black text-gray-900">{h}</span>
-                        <span className="text-xl font-bold text-gray-300 mx-0.5">:</span>
-                        <span className="text-4xl font-black text-gray-900">{m}</span>
-                        <span className="text-xl font-bold text-gray-300 mx-0.5">:</span>
-                        <span className="text-4xl font-black text-gray-900">{s}</span>
-                      </div>
-                      <span className="text-xs text-gray-400 mt-1 font-medium">
-                        {activeFast ? (tick.elapsed > activeFast.goalHours ? '🌟 보너스 타임' : '남은 시간') : `목표 ${displayGoal}시간`}
-                      </span>
+                      {(() => {
+                        const isBonus = !!activeFast && tick.elapsed > activeFast.goalHours;
+                        const numColor = isBonus ? 'text-red-500' : 'text-gray-900';
+                        const sepColor = isBonus ? 'text-red-200' : 'text-gray-300';
+                        return (
+                          <>
+                            <div className="flex items-baseline gap-0.5 tabular-nums">
+                              <span className={`text-4xl font-black ${numColor}`}>{h}</span>
+                              <span className={`text-xl font-bold ${sepColor} mx-0.5`}>:</span>
+                              <span className={`text-4xl font-black ${numColor}`}>{m}</span>
+                              <span className={`text-xl font-bold ${sepColor} mx-0.5`}>:</span>
+                              <span className={`text-4xl font-black ${numColor}`}>{s}</span>
+                            </div>
+                            <span className={`text-xs mt-1 font-medium ${isBonus ? 'text-red-400' : 'text-gray-400'}`}>
+                              {activeFast ? (isBonus ? '🔴 초과 시간' : '남은 시간') : `목표 ${displayGoal}시간`}
+                            </span>
+                          </>
+                        );
+                      })()}
                     </>
                   )}
                 </ArcTimer>
