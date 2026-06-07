@@ -18,6 +18,7 @@ interface FastingTick {
   complete: boolean;
   currentPhase: Phase;
   formattedRemaining: { hours: string; minutes: string; seconds: string };
+  formattedOvertime: { hours: string; minutes: string; seconds: string } | null;
   now: Date;
 }
 
@@ -38,7 +39,11 @@ export function useFastingTick(activeFast: ActiveFast | null): FastingTick | nul
       const complete = isComplete(activeFast.startTime, activeFast.goalHours, now);
       const phase = getCurrentPhase(elapsed);
       const formattedRemaining = formatDuration(remaining);
-      setTick({ elapsed, remaining, progress, complete, currentPhase: phase, formattedRemaining, now });
+      const overtimeMs = complete
+        ? (now.getTime() - activeFast.startTime.getTime()) - activeFast.goalHours * 3600000
+        : 0;
+      const formattedOvertime = complete ? formatDuration(overtimeMs) : null;
+      setTick({ elapsed, remaining, progress, complete, currentPhase: phase, formattedRemaining, formattedOvertime, now });
     };
 
     compute();
