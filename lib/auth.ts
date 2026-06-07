@@ -12,19 +12,34 @@ import { auth, db } from './firebase';
 
 const provider = new GoogleAuthProvider();
 
-export async function signInWithGoogle(): Promise<void> {
-  const isStandalone =
-    typeof window !== 'undefined' &&
-    window.matchMedia('(display-mode: standalone)').matches;
+function isIOS() {
+  if (typeof window === 'undefined') return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent);
+}
 
+function isStandalone() {
+  if (typeof window === 'undefined') return false;
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    ('standalone' in window.navigator && (window.navigator as any).standalone === true)
+  );
+}
+
+export async function signInWithGoogle(): Promise<void> {
+  // iOS PWA: signInWithRedirect가 Safari로 나가버려서 돌아올 수 없음
+  // → popup 방식 사용 (iOS 16.4+ PWA에서 정상 동작)
+  // 구형 iOS fallback: 새 탭에서 열리지만 로그인 후 돌아올 수 있음
   try {
-    if (isStandalone) {
-      await signInWithRedirect(auth, provider);
-    } else {
-      await signInWithPopup(auth, provider);
-    }
+    await signInWithPopup(auth, provider);
   } catch (err: any) {
-    if (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user') {
+    const code = err?.code ?? '';
+    if (
+      code === 'auth/popup-blocked' ||
+      code === 'auth/popup-closed-by-user' ||
+      code === 'auth/cancelled-popup-request'
+    ) {
+      // popup이 차단된 경우에만 redirect로 fallback
+      // (iOS PWA에선 이 경우도 Safari로 나감 — 어쩔 수 없는 iOS 제한)
       await signInWithRedirect(auth, provider);
     } else {
       throw err;

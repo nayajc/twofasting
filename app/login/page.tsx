@@ -1,5 +1,5 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
@@ -15,10 +15,22 @@ const FEATURES = [
 export default function LoginPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const [isOldIOSPWA, setIsOldIOSPWA] = useState(false);
 
   useEffect(() => {
     if (user) router.replace('/timer');
   }, [user, router]);
+
+  useEffect(() => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isPWA =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      ('standalone' in window.navigator && (window.navigator as any).standalone === true);
+    // iOS 16.4 미만에서는 PWA popup 불안정
+    const match = navigator.userAgent.match(/OS (\d+)_/);
+    const iosVersion = match ? parseInt(match[1]) : 99;
+    setIsOldIOSPWA(isIOS && isPWA && iosVersion < 16);
+  }, []);
 
   return (
     <main className="min-h-screen flex flex-col bg-gray-50">
@@ -61,6 +73,12 @@ export default function LoginPage() {
 
           {/* Login */}
           <div className="w-full flex flex-col items-center gap-3">
+            {isOldIOSPWA && (
+              <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 text-xs text-amber-700 leading-relaxed text-center">
+                로그인 버튼을 누르면 Safari가 열립니다.<br />
+                로그인 완료 후 홈 화면에서 앱을 다시 열어주세요.
+              </div>
+            )}
             <GoogleLoginButton />
             <p className="text-xs text-gray-400 text-center leading-relaxed">
               로그인하면 모든 기기에서<br />단식 기록이 동기화됩니다
