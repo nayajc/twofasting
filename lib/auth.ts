@@ -2,6 +2,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
+  signInWithCustomToken,
   getRedirectResult,
   signOut,
   onAuthStateChanged,
@@ -57,6 +58,46 @@ export async function signInWithGoogle(): Promise<void> {
       }
     }
   }
+}
+
+// Kakao SDK 로드
+function loadKakaoSDK(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (typeof window === 'undefined') return reject();
+    if ((window as any).Kakao) return resolve();
+    const script = document.createElement('script');
+    script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js';
+    script.crossOrigin = 'anonymous';
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Kakao SDK load failed'));
+    document.head.appendChild(script);
+  });
+}
+
+export async function signInWithKakao(): Promise<void> {
+  await loadKakaoSDK();
+  const Kakao = (window as any).Kakao;
+  const jsKey = process.env.NEXT_PUBLIC_KAKAO_JS_KEY;
+  if (!jsKey) throw new Error('NEXT_PUBLIC_KAKAO_JS_KEY not set');
+
+  if (!Kakao.isInitialized()) Kakao.init(jsKey);
+
+  const accessToken = await new Promise<string>((resolve, reject) => {
+    Kakao.Auth.login({
+      success: (authObj: any) => resolve(authObj.access_token),
+      fail: (err: any) => reject(new Error(err.error_description ?? 'Kakao login failed')),
+    });
+  });
+
+  const res = await fetch('/api/auth/kakao', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ accessToken }),
+  });
+
+  if (!res.ok) throw new Error('Failed to get Firebase custom token');
+  const { customToken } = await res.json();
+  await signInWithCustomToken(auth, customToken);
 }
 
 export async function handleRedirectResult(): Promise<User | null> {

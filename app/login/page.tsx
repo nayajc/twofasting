@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
+import { KakaoLoginButton } from '@/components/auth/KakaoLoginButton';
 import { useAuth } from '@/hooks/useAuth';
 
 const FEATURES = [
@@ -79,6 +80,12 @@ export default function LoginPage() {
                 로그인 완료 후 홈 화면에서 앱을 다시 열어주세요.
               </div>
             )}
+            <KakaoLoginButton />
+            <div className="flex items-center gap-3 w-full max-w-xs">
+              <div className="flex-1 h-px bg-gray-200" />
+              <span className="text-xs text-gray-300 font-medium">또는</span>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
             <GoogleLoginButton />
             <p className="text-xs text-gray-400 text-center leading-relaxed">
               로그인하면 모든 기기에서<br />단식 기록이 동기화됩니다
