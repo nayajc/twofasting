@@ -3,6 +3,10 @@ import {
   signInWithPopup,
   signInWithRedirect,
   signInWithCustomToken,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  updateProfile,
   getRedirectResult,
   signOut,
   onAuthStateChanged,
@@ -58,6 +62,23 @@ export async function signInWithGoogle(): Promise<void> {
       }
     }
   }
+}
+
+// ── Email / Password ──────────────────────────────────────────────────────────
+
+export async function signUpWithEmail(email: string, password: string, nickname: string): Promise<void> {
+  const result = await createUserWithEmailAndPassword(auth, email, password);
+  await updateProfile(result.user, { displayName: nickname });
+  await upsertUserDoc(result.user);
+}
+
+export async function signInWithEmail(email: string, password: string): Promise<void> {
+  const result = await signInWithEmailAndPassword(auth, email, password);
+  await upsertUserDoc(result.user);
+}
+
+export async function resetPassword(email: string): Promise<void> {
+  await sendPasswordResetEmail(auth, email);
 }
 
 // Kakao SDK 로드

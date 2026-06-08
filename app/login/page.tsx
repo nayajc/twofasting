@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
-import { KakaoLoginButton } from '@/components/auth/KakaoLoginButton';
+import { EmailLoginForm } from '@/components/auth/EmailLoginForm';
 import { useAuth } from '@/hooks/useAuth';
 
 const FEATURES = [
@@ -76,11 +76,11 @@ export default function LoginPage() {
           <div className="w-full flex flex-col items-center gap-3">
             {isOldIOSPWA && (
               <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 text-xs text-amber-700 leading-relaxed text-center">
-                로그인 버튼을 누르면 Safari가 열립니다.<br />
+                Google 로그인 시 Safari가 열립니다.<br />
                 로그인 완료 후 홈 화면에서 앱을 다시 열어주세요.
               </div>
             )}
-            <KakaoLoginButton />
+            <EmailLoginForm />
             <div className="flex items-center gap-3 w-full max-w-xs">
               <div className="flex-1 h-px bg-gray-200" />
               <span className="text-xs text-gray-300 font-medium">또는</span>
