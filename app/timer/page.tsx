@@ -208,36 +208,45 @@ export default function TimerPage() {
 
   return (
     <AuthGuard>
-      <main className="min-h-screen bg-gray-50 flex flex-col pb-24">
+      <main className="min-h-screen bg-gray-50 flex flex-col pb-24 relative">
         {/* Header */}
-        <div className="bg-white px-6 pt-14 pb-5 flex items-center justify-between shadow-[0_1px_0_#f0f0f0]">
-          <div>
-            <p className="text-xs text-gray-400 font-medium tracking-widest uppercase mb-0.5">
-              {activeFast ? '단식 진행 중' : '단식 준비'}
-            </p>
-            <h1 className="text-xl font-black text-gray-900 tracking-tight">고마무라!</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* 알림 버튼 */}
-            {notifPermission !== 'granted' && (
-              <button
-                onClick={requestNotifPermission}
-                className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"
-                title="단식 완료 알림 켜기"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                </svg>
-              </button>
-            )}
-            {user?.photoURL ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.photoURL} alt="profile" className="w-9 h-9 rounded-full border border-gray-100" />
-            ) : (
-              <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-sm font-bold">
-                {user?.displayName?.[0] ?? '?'}
+        <div className="bg-white px-6 pt-14 pb-5 shadow-[0_1px_0_#f0f0f0]">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-400 font-medium tracking-widest uppercase mb-0.5">
+                {activeFast ? '단식 진행 중' : '단식 준비'}
+              </p>
+              <h1 className="text-xl font-black text-gray-900 tracking-tight">고마무라!</h1>
+            </div>
+
+            {/* 쫌! 로고 */}
+            <div className="absolute left-1/2 -translate-x-1/2 top-8">
+              <div className="w-16 h-16 bg-gray-100 rounded-[22px] flex items-center justify-center shadow-sm">
+                <span className="text-3xl font-black text-gray-900 leading-none">쫌</span>
               </div>
-            )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {notifPermission !== 'granted' && (
+                <button
+                  onClick={requestNotifPermission}
+                  className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"
+                  title="단식 완료 알림 켜기"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                  </svg>
+                </button>
+              )}
+              {user?.photoURL ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={user.photoURL} alt="profile" className="w-9 h-9 rounded-full border border-gray-100" />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 text-sm font-bold">
+                  {user?.displayName?.[0] ?? '?'}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
