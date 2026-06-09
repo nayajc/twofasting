@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     title: '고마무라!',
   },
   icons: {
-    apple: '/icons/icon-192.svg',
+    apple: '/icons/icon-192.png',
   },
 };
 

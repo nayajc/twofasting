@@ -12,7 +12,7 @@ import { getLevelProgress } from '@/lib/level';
 import type { FastingDuration, FastingRecord } from '@/types';
 import { FASTING_PHASES } from '@/data/fastingPhases';
 
-const GOALS: FastingDuration[] = [12, 16, 18, 20, 24];
+const GOALS: FastingDuration[] = [12, 14, 16, 18, 20, 24];
 
 const QUOTES = [
   '배고픔은 지나가지만, 뱃살은 안 간다.',
@@ -315,49 +315,46 @@ export default function TimerPage() {
               <motion.div key={activeFast ? 'active' : 'idle'}
                 initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.92 }} transition={{ duration: 0.3 }}>
-                <ArcTimer progress={tick.progress} color={phaseColor} isBonus={!!activeFast && tick.elapsed > activeFast.goalHours}>
-                  {tick.complete ? (
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-5xl">🎉</motion.div>
-                  ) : (
-                    <>
-                      {(() => {
-                        const isBonus = !!activeFast && tick.elapsed > activeFast.goalHours;
-                        const ot = tick.formattedOvertime;
-                        if (isBonus && ot) {
-                          return (
+                <ArcTimer progress={tick.progress} color={phaseColor} isBonus={!!activeFast && tick.complete}>
+                  {(() => {
+                    const ot = tick.formattedOvertime;
+                    if (activeFast && tick.complete && ot) {
+                      const isJustComplete = ot.hours === '00' && ot.minutes === '00' && ot.seconds === '00';
+                      return (
+                        <>
+                          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-2xl mb-1">🎉</motion.div>
+                          <span className="text-xs font-bold text-red-300 mb-1">목표 {activeFast.goalHours}h 달성!</span>
+                          {!isJustComplete && (
                             <>
-                              {/* 목표 달성 표시 */}
-                              <span className="text-xs font-bold text-red-300 mb-1">목표 {activeFast?.goalHours}h 달성 ✓</span>
-                              {/* 초과 시간 */}
                               <div className="flex items-baseline gap-0.5 tabular-nums">
                                 <span className="text-sm font-black text-red-400 mr-0.5">+</span>
-                                <span className="text-4xl font-black text-red-500">{ot.hours}</span>
-                                <span className="text-xl font-bold text-red-200 mx-0.5">:</span>
-                                <span className="text-4xl font-black text-red-500">{ot.minutes}</span>
-                                <span className="text-xl font-bold text-red-200 mx-0.5">:</span>
-                                <span className="text-4xl font-black text-red-500">{ot.seconds}</span>
+                                <span className="text-3xl font-black text-red-500">{ot.hours}</span>
+                                <span className="text-lg font-bold text-red-200 mx-0.5">:</span>
+                                <span className="text-3xl font-black text-red-500">{ot.minutes}</span>
+                                <span className="text-lg font-bold text-red-200 mx-0.5">:</span>
+                                <span className="text-3xl font-black text-red-500">{ot.seconds}</span>
                               </div>
-                              <span className="text-xs text-red-400 mt-1 font-medium">초과 시간</span>
+                              <span className="text-xs text-red-400 mt-1 font-medium">보너스 시간 🔥</span>
                             </>
-                          );
-                        }
-                        return (
-                          <>
-                            <div className="flex items-baseline gap-0.5 tabular-nums">
-                              <span className="text-4xl font-black text-gray-900">{h}</span>
-                              <span className="text-xl font-bold text-gray-300 mx-0.5">:</span>
-                              <span className="text-4xl font-black text-gray-900">{m}</span>
-                              <span className="text-xl font-bold text-gray-300 mx-0.5">:</span>
-                              <span className="text-4xl font-black text-gray-900">{s}</span>
-                            </div>
-                            <span className="text-xs text-gray-400 mt-1 font-medium">
-                              {activeFast ? '남은 시간' : `목표 ${displayGoal}시간`}
-                            </span>
-                          </>
-                        );
-                      })()}
-                    </>
-                  )}
+                          )}
+                        </>
+                      );
+                    }
+                    return (
+                      <>
+                        <div className="flex items-baseline gap-0.5 tabular-nums">
+                          <span className="text-4xl font-black text-gray-900">{h}</span>
+                          <span className="text-xl font-bold text-gray-300 mx-0.5">:</span>
+                          <span className="text-4xl font-black text-gray-900">{m}</span>
+                          <span className="text-xl font-bold text-gray-300 mx-0.5">:</span>
+                          <span className="text-4xl font-black text-gray-900">{s}</span>
+                        </div>
+                        <span className="text-xs text-gray-400 mt-1 font-medium">
+                          {activeFast ? '남은 시간' : `목표 ${displayGoal}시간`}
+                        </span>
+                      </>
+                    );
+                  })()}
                 </ArcTimer>
               </motion.div>
             </AnimatePresence>
