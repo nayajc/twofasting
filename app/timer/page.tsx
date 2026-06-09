@@ -416,8 +416,11 @@ export default function TimerPage() {
                 style={{ backgroundColor: `${phaseColor}20` }}>
                 {tick.currentPhase.icon}
               </div>
-              <div>
-                <p className="text-sm font-bold text-gray-800">{tick.currentPhase.name}</p>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <p className="text-sm font-bold text-gray-800">{tick.currentPhase.koreanName}</p>
+                  <span className="text-[10px] font-bold text-gray-300">{tick.currentPhase.startHour}h~</span>
+                </div>
                 <p className="text-xs text-gray-400 leading-relaxed">{tick.currentPhase.description}</p>
               </div>
             </motion.div>
