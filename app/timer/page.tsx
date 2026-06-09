@@ -221,9 +221,7 @@ export default function TimerPage() {
 
             {/* 쫌! 로고 */}
             <div className="absolute left-1/2 -translate-x-1/2 top-8">
-              <div className="w-16 h-16 bg-gray-100 rounded-[22px] flex items-center justify-center shadow-sm">
-                <span className="text-3xl font-black text-gray-900 leading-none">쫌</span>
-              </div>
+              <span className="text-6xl font-black text-gray-900 leading-none">쫌</span>
             </div>
 
             <div className="flex items-center gap-2">
